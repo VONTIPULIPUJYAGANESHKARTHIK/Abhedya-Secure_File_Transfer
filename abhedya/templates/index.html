@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abhedya — Secure File Encryption</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ABHEDYA  ·  Design System
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+:root {
+  /* Palette — deep slate with gold accent */
+  --bg:        #07090f;
+  --bg-1:      #0d1019;
+  --bg-2:      #121620;
+  --bg-3:      #181d2a;
+  --bg-4:      #1e2434;
+
+  --border:    rgba(255,255,255,0.07);
+  --border-md: rgba(255,255,255,0.12);
+  --border-lg: rgba(255,255,255,0.20);
+
+  --gold:      #d4a843;
+  --gold-lt:   #efc76a;
+  --gold-dim:  rgba(212,168,67,0.14);
+  --gold-glow: rgba(212,168,67,0.22);
+
+  --green:     #22c55e;
+  --green-dim: rgba(34,197,94,0.12);
+  --blue:      #3b82f6;
+  --blue-dim:  rgba(59,130,246,0.12);
+  --red:       #ef4444;
+  --red-dim:   rgba(239,68,68,0.12);
+  --amber:     #f59e0b;
+
+  --text-1:    #f0f2f8;
+  --text-2:    #8b95b0;
+  --text-3:    #4a5268;
+
+  --r-s:  6px;
+  --r-m:  10px;
+  --r-l:  16px;
+  --r-xl: 22px;
+
+  --ff: 'Plus Jakarta Sans', sans-serif;
+  --fm: 'JetBrains Mono', monospace;
+  --tr: 0.18s cubic-bezier(.4,0,.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--ff);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+/* Subtle grid */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 90% 50% at 0% 0%,   rgba(212,168,67,.03) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 60% at 100% 100%, rgba(59,130,246,.03) 0%, transparent 55%),
+    linear-gradient(rgba(255,255,255,.013) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.013) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+  pointer-events: none;
+}
+.z { position: relative; z-index: 1; }
+
+/* ── Topbar ── */
+.topbar {
+  position: sticky; top: 0; z-index: 200;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem;
+  background: rgba(7,9,15,0.9);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: linear-gradient(145deg, var(--gold-lt), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(212,168,67,.3), 0 4px 16px rgba(212,168,67,.18);
+}
+.brand-name {
+  font-size: 18px; font-weight: 800; letter-spacing: -.4px;
+  background: linear-gradient(135deg, var(--gold-lt) 0%, var(--gold) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.brand-sub { font-size: 10px; color: var(--text-3); font-family: var(--fm); letter-spacing: 1px; }
+.server-dot {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border-radius: 20px;
+  font-size: 11px; color: var(--text-3);
+  background: var(--bg-2); border: 1px solid var(--border);
+  font-family: var(--fm); transition: var(--tr);
+}
+.server-dot .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); }
+.server-dot.on .dot { background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,.5); }
+.server-dot.on { border-color: rgba(34,197,94,.2); }
+.server-dot.off .dot { background: var(--red); }
+.server-dot.off { border-color: rgba(239,68,68,.2); }
+
+/* ── Hero ── */
+.hero {
+  text-align: center;
+  padding: 3.5rem 1.5rem 3rem;
+  max-width: 680px; margin: 0 auto;
+}
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 4px 14px; border-radius: 20px;
+  font-size: 11px; font-family: var(--fm); letter-spacing: 1px;
+  text-transform: uppercase; color: var(--gold);
+  background: var(--gold-dim); border: 1px solid rgba(212,168,67,.2);
+  margin-bottom: 1.4rem;
+}
+.hero h1 {
+  font-size: clamp(1.8rem, 4.5vw, 2.8rem);
+  font-weight: 800; letter-spacing: -1px; line-height: 1.15;
+  color: var(--text-1); margin-bottom: .8rem;
+}
+.hero h1 span {
+  background: linear-gradient(135deg, var(--gold-lt), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero p { font-size: 15px; color: var(--text-2); line-height: 1.7; margin-bottom: 2rem; }
+
+/* ── Spec chips ── */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 2.8rem; }
+.chip {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 13px; border-radius: 20px;
+  background: var(--bg-2); border: 1px solid var(--border-md);
+  font-size: 12px; transition: var(--tr);
+}
+.chip:hover { border-color: var(--border-lg); }
+.chip-k { color: var(--text-3); font-family: var(--fm); font-size: 9px; text-transform: uppercase; letter-spacing: .8px; }
+.chip-v { font-weight: 600; }
+
+/* ── Main container ── */
+.main { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem 5rem; }
+
+/* ── Step cards (Encrypt / Decrypt selector) ── */
+.op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 2rem; }
+@media(max-width:580px){ .op-grid { grid-template-columns: 1fr; } }
+
+.op-card {
+  border: 1.5px solid var(--border); border-radius: var(--r-xl);
+  padding: 1.6rem; cursor: pointer;
+  background: var(--bg-1); transition: var(--tr);
+  position: relative; overflow: hidden; user-select: none;
+}
+.op-card::after {
+  content: ''; position: absolute; inset: 0;
+  border-radius: var(--r-xl); opacity: 0;
+  transition: opacity var(--tr);
+}
+.op-e::after { background: radial-gradient(ellipse at 20% 20%, rgba(212,168,67,.06), transparent 60%); }
+.op-d::after { background: radial-gradient(ellipse at 20% 20%, rgba(59,130,246,.06), transparent 60%); }
+.op-card:hover { border-color: var(--border-md); transform: translateY(-1px); }
+.op-card:hover::after, .op-card.sel::after { opacity: 1; }
+.op-card.sel { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+.op-card.sel.op-e { border-color: rgba(212,168,67,.35); }
+.op-card.sel.op-d { border-color: rgba(59,130,246,.35); }
+
+.op-sel-badge {
+  position: absolute; top: 1rem; right: 1rem;
+  padding: 3px 9px; border-radius: 10px;
+  font-size: 10px; font-family: var(--fm); font-weight: 600;
+  text-transform: uppercase; letter-spacing: .7px;
+  display: none;
+}
+.op-card.sel .op-sel-badge { display: block; }
+.op-e.sel .op-sel-badge { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(212,168,67,.25); }
+.op-d.sel .op-sel-badge { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(59,130,246,.25); }
+
+.op-ico {
+  width: 48px; height: 48px; border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; margin-bottom: .9rem;
+}
+.op-e .op-ico { background: var(--gold-dim); border: 1px solid rgba(212,168,67,.2); }
+.op-d .op-ico { background: var(--blue-dim); border: 1px solid rgba(59,130,246,.2); }
+.op-ttl { font-size: 19px; font-weight: 700; margin-bottom: 4px; }
+.op-e .op-ttl { color: var(--gold); }
+.op-d .op-ttl { color: var(--blue); }
+.op-dsc { font-size: 13px; color: var(--text-2); line-height: 1.55; }
+
+/* ── Panels ── */
+.panel { display: none; }
+.panel.on { display: block; animation: up .3s ease; }
+@keyframes up { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+
+/* ── Pipeline ── */
+.pipeline {
+  display: flex; align-items: center;
+  background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: var(--r-l); padding: 12px 16px;
+  margin-bottom: 1.4rem; overflow-x: auto; gap: 0;
+}
+.ps {
+  flex: 1; min-width: 56px; display: flex;
+  flex-direction: column; align-items: center; gap: 5px;
+  transition: var(--tr);
+}
+.ps-c {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  background: var(--bg-3); border: 1.5px solid var(--border-md);
+  transition: var(--tr);
+}
+.ps-l { font-size: 9px; color: var(--text-3); text-transform: uppercase; letter-spacing: .6px; font-family: var(--fm); text-align: center; }
+.ps.go  .ps-c { border-color: var(--gold);  background: var(--gold-dim); }
+.ps.ok  .ps-c { border-color: var(--green); background: var(--green-dim); }
+.ps.bad .ps-c { border-color: var(--red);   background: var(--red-dim); }
+.pc { flex: .25; height: 1.5px; background: var(--border-md); min-width: 10px; transition: background var(--tr); }
+.pc.lit { background: var(--green); }
+
+/* ── Two-col form ── */
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+@media(max-width:780px){ .cols { grid-template-columns: 1fr; } }
+
+/* ── Card ── */
+.card {
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-radius: var(--r-xl); padding: 1.6rem;
+  transition: border-color var(--tr);
+}
+.card:hover { border-color: var(--border-md); }
+.card-hd {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--text-3);
+  margin-bottom: 1.3rem; display: flex; align-items: center; gap: 8px;
+}
+
+/* ── Segmented control ── */
+.seg {
+  display: flex; background: var(--bg-3); border-radius: var(--r-m);
+  padding: 3px; gap: 3px; margin-bottom: 1.3rem;
+}
+.seg-btn {
+  flex: 1; padding: 8px 10px; border-radius: 8px;
+  border: none; background: none;
+  font-family: var(--ff); font-size: 13px; font-weight: 500;
+  color: var(--text-3); cursor: pointer; transition: var(--tr);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.seg-btn.on { background: var(--bg-4); color: var(--text-1); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+
+/* ── Field ── */
+.fld { margin-bottom: 1.1rem; }
+.fld:last-child { margin-bottom: 0; }
+.fld-lbl {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; font-weight: 600; color: var(--text-2);
+  text-transform: uppercase; letter-spacing: .6px;
+  margin-bottom: 6px;
+}
+.fld-hint { font-size: 10px; font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0; }
+.wrap { position: relative; }
+input[type=text],input[type=password],input[type=number],textarea,select {
+  width: 100%; background: var(--bg-3);
+  border: 1.5px solid var(--border-md);
+  border-radius: var(--r-m); color: var(--text-1);
+  font-family: var(--ff); font-size: 14px;
+  padding: 11px 14px; outline: none;
+  transition: border-color var(--tr), box-shadow var(--tr);
+}
+input:focus, textarea:focus {
+  border-color: rgba(212,168,67,.45);
+  box-shadow: 0 0 0 3px rgba(212,168,67,.1);
+}
+textarea { min-height: 108px; resize: vertical; line-height: 1.6; }
+input[type=number] { max-width: 90px; }
+.eyebtn {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--text-3);
+  font-family: var(--fm); font-size: 11px; cursor: pointer;
+  padding: 2px 6px; border-radius: 4px; transition: color var(--tr);
+}
+.eyebtn:hover { color: var(--gold); }
+
+/* ── Strength bar ── */
+.sbar { margin-top: 9px; }
+.sbar-track { height: 3px; background: var(--bg-3); border-radius: 2px; overflow: hidden; margin-bottom: 5px; }
+.sbar-fill  { height: 100%; border-radius: 2px; transition: width .5s ease, background .4s; width: 0%; }
+.sbar-meta  { display: flex; justify-content: space-between; align-items: center; }
+.sbar-lbl   { font-size: 11px; font-weight: 600; transition: color .3s; }
+.sbar-crack { font-size: 10px; color: var(--text-3); font-family: var(--fm); }
+
+/* ── Drop zone ── */
+.dz {
+  border: 1.5px dashed var(--border-lg); border-radius: var(--r-l);
+  padding: 2rem 1.5rem; text-align: center;
+  cursor: pointer; transition: var(--tr); position: relative; overflow: hidden;
+}
+.dz:hover, .dz.drag { border-color: rgba(212,168,67,.5); background: rgba(212,168,67,.03); }
+.dz input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.dz-ico { font-size: 28px; margin-bottom: 8px; line-height: 1; }
+.dz-p   { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.dz-s   { font-size: 12px; color: var(--text-3); }
+.dz-fn  { display: none; font-size: 11px; color: var(--green); margin-top: 7px; font-family: var(--fm); }
+.dz.has .dz-fn { display: block; }
+.dz.has { border-color: rgba(34,197,94,.4); background: rgba(34,197,94,.03); }
+
+/* ── Entropy ring ── */
+.ering-wrap {
+  background: var(--bg-3); border: 1px solid var(--border-md);
+  border-radius: var(--r-l); padding: 1.3rem; text-align: center;
+  margin-bottom: 1.1rem;
+}
+.ering { position: relative; width: 90px; height: 90px; margin: 0 auto 9px; }
+.ering svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ering-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ering-n { font-size: 18px; font-weight: 800; line-height: 1; }
+.ering-u { font-size: 9px; color: var(--text-3); margin-top: 2px; font-family: var(--fm); text-transform: uppercase; letter-spacing: .8px; }
+.ering-l { font-size: 12px; font-weight: 600; }
+.ering-s { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+
+/* ── Feedback items ── */
+.fblist { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
+.fb {
+  display: flex; align-items: flex-start; gap: 7px;
+  font-size: 11px; padding: 7px 10px; border-radius: var(--r-s);
+  line-height: 1.5;
+}
+.fb-e { background: rgba(239,68,68,.08);  color: #fca5a5; border: 1px solid rgba(239,68,68,.15); }
+.fb-w { background: rgba(245,158,11,.07); color: #fcd34d; border: 1px solid rgba(245,158,11,.15); }
+.fb-g { background: rgba(34,197,94,.07);  color: #86efac; border: 1px solid rgba(34,197,94,.15); }
+
+/* ── Primary action button ── */
+.primary-btn {
+  width: 100%; padding: 14px 20px;
+  border: none; border-radius: var(--r-l);
+  font-family: var(--ff); font-size: 15px; font-weight: 700;
+  cursor: pointer; letter-spacing: .2px;
+  transition: var(--tr); display: flex; align-items: center; justify-content: center; gap: 9px;
+  position: relative; overflow: hidden;
+}
+.primary-btn::before {
+  content: ''; position: absolute; inset: 0; border-radius: var(--r-l);
+  background: linear-gradient(135deg, rgba(255,255,255,.1), transparent);
+  opacity: 0; transition: opacity var(--tr);
+}
+.primary-btn:hover::before { opacity: 1; }
+.primary-btn:active { transform: scale(.985); }
+.primary-btn:disabled { opacity: .4; cursor: default; pointer-events: none; }
+.btn-gold  { background: linear-gradient(135deg, var(--gold-lt), var(--gold)); color: #1a0f00; box-shadow: 0 4px 20px rgba(212,168,67,.22); }
+.btn-gold:hover  { box-shadow: 0 6px 28px rgba(212,168,67,.32); }
+.btn-blue  { background: linear-gradient(135deg, #60a5fa, var(--blue));  color: #fff; box-shadow: 0 4px 20px rgba(59,130,246,.2); }
+.btn-blue:hover  { box-shadow: 0 6px 28px rgba(59,130,246,.3); }
+.btn-green { background: linear-gradient(135deg, #4ade80, var(--green)); color: #022010; box-shadow: 0 4px 20px rgba(34,197,94,.18); }
+.btn-green:hover { box-shadow: 0 6px 28px rgba(34,197,94,.28); }
+.spinner { width: 15px; height: 15px; border: 2px solid rgba(0,0,0,.2); border-top-color: currentColor; border-radius: 50%; animation: spin .55s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── Result card ── */
+.result {
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-radius: var(--r-xl); overflow: hidden;
+  margin-top: 16px; animation: up .3s ease;
+}
+.result-hd {
+  display: flex; align-items: center; gap: 12px;
+  padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border);
+}
+.result-ico {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0;
+}
+.r-ok  .result-ico { background: var(--green-dim); border: 1px solid rgba(34,197,94,.3); }
+.r-bad .result-ico { background: var(--red-dim);   border: 1px solid rgba(239,68,68,.3); }
+.result-title { font-size: 15px; font-weight: 700; }
+.result-sub   { font-size: 12px; color: var(--text-2); margin-top: 1px; }
+.result-metrics {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border);
+}
+@media(max-width:500px){ .result-metrics { grid-template-columns: 1fr 1fr; } }
+.rmet { background: var(--bg-2); border-radius: var(--r-m); padding: 11px 13px; }
+.rmet-k { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--text-3); font-family: var(--fm); margin-bottom: 4px; }
+.rmet-v { font-size: 14px; font-weight: 700; }
+.result-out { padding: 1.2rem 1.5rem; }
+.out-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.out-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--text-2); }
+.out-box {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--r-m); padding: 11px 13px;
+  font-family: var(--fm); font-size: 11px; color: var(--text-2);
+  word-break: break-all; line-height: 1.75;
+  min-height: 60px; max-height: 150px; overflow-y: auto;
+}
+.out-box.plain { font-family: var(--ff); font-size: 14px; color: var(--text-1); word-break: normal; }
+.dl-btn {
+  margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 10px 14px; border-radius: var(--r-m); width: 100%;
+  border: 1.5px solid rgba(34,197,94,.3); background: rgba(34,197,94,.06);
+  color: var(--green); font-family: var(--ff); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: var(--tr);
+}
+.dl-btn:hover { background: rgba(34,197,94,.12); border-color: rgba(34,197,94,.5); }
+.cpbtn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 11px; border-radius: var(--r-s);
+  border: 1px solid var(--border-md); background: var(--bg-3);
+  color: var(--text-2); font-size: 11px; font-family: var(--fm);
+  cursor: pointer; transition: var(--tr);
+}
+.cpbtn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── Auth status ── */
+.auth-badge {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 15px; border-radius: var(--r-l);
+  border: 1.5px solid var(--border); background: var(--bg-3);
+  transition: var(--tr); margin-bottom: 1rem;
+}
+.auth-badge.ok   { border-color: rgba(34,197,94,.3);  background: rgba(34,197,94,.05); }
+.auth-badge.fail { border-color: rgba(239,68,68,.3);  background: rgba(239,68,68,.05); }
+.auth-ico { font-size: 22px; flex-shrink: 0; }
+.auth-ttl { font-size: 13px; font-weight: 700; }
+.auth-sub { font-size: 11px; color: var(--text-2); margin-top: 1px; }
+
+/* ── Log ── */
+.log-wrap {
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-radius: var(--r-xl); overflow: hidden; margin-top: 16px;
+}
+.log-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .9rem 1.3rem; border-bottom: 1px solid var(--border);
+}
+.log-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text-3); display: flex; align-items: center; gap: 8px; }
+.log-clear { font-size: 11px; font-family: var(--fm); color: var(--text-3); cursor: pointer; background: none; border: none; padding: 2px 8px; border-radius: 4px; transition: color var(--tr); }
+.log-clear:hover { color: var(--red); }
+.log-body { padding: .7rem 1.3rem; max-height: 185px; overflow-y: auto; }
+.log-row { display: flex; align-items: baseline; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--border); font-family: var(--fm); font-size: 11px; animation: up .2s ease; }
+.log-row:last-child { border-bottom: none; }
+.log-ts  { color: var(--text-3); flex-shrink: 0; font-size: 10px; }
+.log-msg { color: var(--text-2); flex: 1; line-height: 1.5; }
+.log-msg.ok   { color: #86efac; }
+.log-msg.err  { color: #fca5a5; }
+.log-msg.warn { color: #fcd34d; }
+.log-msg.info { color: #93c5fd; }
+
+/* ── Tool section ── */
+.section { margin-top: 3rem; }
+.sec-divider { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+.sec-line { flex: 1; height: 1px; background: var(--border-md); }
+.sec-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-3); font-family: var(--fm); white-space: nowrap; }
+.twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media(max-width:680px){ .twocol { grid-template-columns: 1fr; } }
+
+/* ── Generator ── */
+.gen-out {
+  background: var(--bg); border: 1.5px solid var(--border-md);
+  border-radius: var(--r-m); padding: 12px 14px;
+  font-family: var(--fm); font-size: 13px; font-weight: 500;
+  color: var(--green); letter-spacing: .5px;
+  word-break: break-all; min-height: 48px;
+  transition: border-color var(--tr);
+}
+.gen-out:not(:empty) { border-color: rgba(34,197,94,.25); }
+
+/* ── Theory ── */
+.mode-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 12px; }
+@media(max-width:580px){ .mode-4 { grid-template-columns: repeat(2,1fr); } }
+.mcard {
+  background: var(--bg-3); border: 1.5px solid var(--border-md);
+  border-radius: var(--r-l); padding: 1rem .8rem;
+  text-align: center; cursor: pointer; transition: var(--tr);
+}
+.mcard:hover { border-color: var(--border-lg); transform: translateY(-1px); }
+.mcard.on { border-color: rgba(212,168,67,.35); background: rgba(212,168,67,.04); }
+.mcard.danger { border-color: rgba(239,68,68,.25); }
+.mcard-n { font-size: 21px; font-weight: 900; margin-bottom: 4px; }
+.mcard-t { font-size: 9px; text-transform: uppercase; letter-spacing: .7px; font-family: var(--fm); }
+.theory-box {
+  background: var(--bg-3); border-radius: var(--r-l); padding: 1.1rem 1.3rem;
+  font-size: 13px; color: var(--text-2); line-height: 1.7;
+  border-left: 3px solid var(--gold); min-height: 72px;
+  transition: border-color var(--tr);
+}
+.atk { width: 100%; border-collapse: collapse; font-size: 12px; }
+.atk th { text-align: left; padding: 7px 11px; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-3); font-family: var(--fm); border-bottom: 1px solid var(--border-md); }
+.atk td { padding: 11px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.atk tr:last-child td { border-bottom: none; }
+.atk tr:hover td { background: rgba(255,255,255,.015); }
+.sev { display: inline-block; padding: 2px 7px; border-radius: 5px; font-size: 9px; font-family: var(--fm); font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.sev-h { background: rgba(239,68,68,.12);  color: #fca5a5; border: 1px solid rgba(239,68,68,.2); }
+.sev-m { background: rgba(245,158,11,.10); color: #fcd34d; border: 1px solid rgba(245,158,11,.2); }
+.sev-l { background: rgba(59,130,246,.10); color: #93c5fd; border: 1px solid rgba(59,130,246,.2); }
+.fmt-bar { display: flex; border-radius: var(--r-m); overflow: hidden; height: 42px; }
+.fmt-seg { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 7px; gap: 2px; }
+.fmt-sl { font-size: 8px; text-transform: uppercase; letter-spacing: .5px; opacity: .6; font-family: var(--fm); }
+.fmt-ss { font-size: 11px; font-weight: 700; }
+.f1{background:rgba(80,85,105,.3);flex:.35}.f2{background:rgba(59,130,246,.18);flex:1.5;color:#93c5fd}
+.f3{background:rgba(34,197,94,.17);flex:1.2;color:#86efac}.f4{background:rgba(245,158,11,.16);flex:1.5;color:#fcd34d}
+.f5{background:rgba(212,168,67,.17);flex:4;color:var(--gold)}
+.fmt-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 9px; font-size: 11px; color: var(--text-3); }
+.fml { display: flex; align-items: center; gap: 5px; }
+.fmd { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+/* ── Decrypt result actions ── */
+.result-actions {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 0 1.5rem 1.2rem;
+}
+.ract-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 10px 18px; border-radius: var(--r-m);
+  font-family: var(--ff); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: var(--tr); border: 1.5px solid;
+  flex: 1; min-width: 130px; justify-content: center;
+}
+.ract-view {
+  background: var(--bg-3); border-color: var(--border-lg); color: var(--text-1);
+}
+.ract-view:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+.ract-dl {
+  background: rgba(34,197,94,.07); border-color: rgba(34,197,94,.35); color: var(--green);
+}
+.ract-dl:hover { background: rgba(34,197,94,.14); border-color: rgba(34,197,94,.6); }
+.ract-cp {
+  background: var(--bg-3); border-color: var(--border-md); color: var(--text-2);
+}
+.ract-cp:hover { border-color: var(--blue); color: var(--blue); }
+
+/* ── Text viewer panel ── */
+.result-viewer {
+  margin: 0 1.5rem 1.4rem;
+  border: 1px solid var(--border-md); border-radius: var(--r-l);
+  overflow: hidden; animation: up .2s ease;
+}
+.viewer-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 14px; background: var(--bg-3); border-bottom: 1px solid var(--border);
+}
+.viewer-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--text-3); }
+.viewer-body {
+  background: var(--bg); padding: 14px 16px;
+  font-family: var(--fm); font-size: 12px; color: var(--text-1);
+  line-height: 1.8; white-space: pre-wrap; word-break: break-word;
+  max-height: 380px; overflow-y: auto;
+}
+
+.decrypt-steps {
+  background: var(--bg-3); border-radius: var(--r-l); padding: 1.1rem 1.3rem;
+  font-size: 12px; color: var(--text-3); line-height: 1.9;
+}
+.decrypt-steps span { display: inline-block; width: 18px; height: 18px; border-radius: 50%; background: var(--bg-4); border: 1px solid var(--border-md); text-align: center; font-size: 10px; line-height: 18px; margin-right: 6px; color: var(--text-2); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border-lg); border-radius: 3px; }
+
+.hidden { display: none !important; }
+.mt1 { margin-top: .8rem; }
+.mt2 { margin-top: 1.3rem; }
+.full { width: 100%; }
+</style>
+</head>
+<body>
+<div class="z">
+
+<!-- ══════════ TOPBAR ══════════ -->
+<nav class="topbar">
+  <div class="brand">
+    <div class="brand-mark">🛡</div>
+    <div>
+      <div class="brand-name">Abhedya</div>
+      <div class="brand-sub">AES-256 · Secure Encryption</div>
+    </div>
+  </div>
+  <div class="server-dot" id="srv">
+    <div class="dot"></div>
+    <span id="srvTxt">Connecting…</span>
+  </div>
+</nav>
+
+<!-- ══════════ HERO ══════════ -->
+<div class="z">
+<section class="hero">
+  <div class="hero-tag">AES-256-GCM Authenticated Encryption</div>
+  <h1>Protect your files<br>with <span>unbreakable encryption</span></h1>
+  <p>Abhedya encrypts your messages and files using industry-standard AES-256-GCM — the same algorithm trusted by governments, financial institutions, and security researchers worldwide.</p>
+  <div class="chips">
+    <div class="chip"><span>🔐</span><span class="chip-k">Cipher</span><span class="chip-v">AES-256-GCM</span></div>
+    <div class="chip"><span>🔑</span><span class="chip-k">Key Derivation</span><span class="chip-v">PBKDF2-SHA256</span></div>
+    <div class="chip"><span>🔁</span><span class="chip-k">KDF Rounds</span><span class="chip-v">600,000</span></div>
+    <div class="chip"><span>🏷</span><span class="chip-k">Auth Tag</span><span class="chip-v">128-bit</span></div>
+    <div class="chip"><span>🎲</span><span class="chip-k">Salt / Nonce</span><span class="chip-v">Random every time</span></div>
+  </div>
+</section>
+
+<!-- ══════════ WORKSPACE ══════════ -->
+<div class="main">
+
+  <!-- Operation selector -->
+  <div class="op-grid">
+    <div class="op-card op-e sel" id="opE" onclick="pick('e')">
+      <div class="op-sel-badge">Selected</div>
+      <div class="op-ico">🔒</div>
+      <div class="op-ttl">Encrypt</div>
+      <div class="op-dsc">Protect a message or file with a password. Only someone with the correct password can ever read it.</div>
+    </div>
+    <div class="op-card op-d" id="opD" onclick="pick('d')">
+      <div class="op-sel-badge">Selected</div>
+      <div class="op-ico">🔓</div>
+      <div class="op-ttl">Decrypt</div>
+      <div class="op-dsc">Unlock an encrypted file. The system automatically verifies that the file has not been altered.</div>
+    </div>
+  </div>
+
+  <!-- ════ ENCRYPT ════ -->
+  <div id="panE" class="panel on">
+
+    <!-- Pipeline -->
+    <div class="pipeline">
+      <div class="ps" id="e0"><div class="ps-c">📄</div><div class="ps-l">Input</div></div>
+      <div class="pc" id="ec0"></div>
+      <div class="ps" id="e1"><div class="ps-c">🧂</div><div class="ps-l">Salt</div></div>
+      <div class="pc" id="ec1"></div>
+      <div class="ps" id="e2"><div class="ps-c">🔑</div><div class="ps-l">Key</div></div>
+      <div class="pc" id="ec2"></div>
+      <div class="ps" id="e3"><div class="ps-c">⚙️</div><div class="ps-l">Encrypt</div></div>
+      <div class="pc" id="ec3"></div>
+      <div class="ps" id="e4"><div class="ps-c">🏷️</div><div class="ps-l">Sign</div></div>
+      <div class="pc" id="ec4"></div>
+      <div class="ps" id="e5"><div class="ps-c">💾</div><div class="ps-l">Done</div></div>
+    </div>
+
+    <div class="cols">
+      <!-- Left: input -->
+      <div class="card">
+        <div class="card-hd">What do you want to encrypt?</div>
+        <div class="seg">
+          <button class="seg-btn on" id="mTB" onclick="sIM('t')">✏ Text message</button>
+          <button class="seg-btn"    id="mFB" onclick="sIM('f')">📁 File upload</button>
+        </div>
+        <div id="tA">
+          <div class="fld">
+            <div class="fld-lbl">Your message</div>
+            <textarea id="eTxt" placeholder="Type your confidential message here…">Hello! This message is protected by AES-256-GCM authenticated encryption.</textarea>
+          </div>
+        </div>
+        <div id="fA" class="hidden">
+          <div class="fld">
+            <div class="fld-lbl">File to encrypt <span class="fld-hint">Max 100 MB</span></div>
+            <div class="dz" id="eDZ">
+              <input type="file" id="eF" onchange="onFile(this,'eDZ','eDZN')">
+              <div class="dz-ico">📂</div>
+              <div class="dz-p">Drop file here or click to browse</div>
+              <div class="dz-s">Supports any file type up to 100 MB</div>
+              <div class="dz-fn" id="eDZN"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: password + entropy -->
+      <div class="card">
+        <div class="card-hd">Set a password</div>
+        <div class="fld">
+          <div class="fld-lbl">Password <span class="fld-hint">Min 8 characters</span></div>
+          <div class="wrap">
+            <input type="password" id="ePw" value="MyS3cur3P@ss!" placeholder="Create a strong password…"
+              oninput="onPw(this,'eArc','eN','eFill','eSL','eCT','eFB')">
+            <button class="eyebtn" onclick="eye('ePw',this)">show</button>
+          </div>
+          <div class="sbar">
+            <div class="sbar-track"><div class="sbar-fill" id="eFill"></div></div>
+            <div class="sbar-meta">
+              <span class="sbar-lbl" id="eSL">—</span>
+              <span class="sbar-crack" id="eCT"></span>
+            </div>
+          </div>
+        </div>
+        <div class="ering-wrap">
+          <div class="ering">
+            <svg viewBox="0 0 90 90">
+              <circle cx="45" cy="45" r="35" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="6.5"/>
+              <circle id="eArc" cx="45" cy="45" r="35" fill="none" stroke="var(--gold)"
+                stroke-width="6.5" stroke-linecap="round"
+                stroke-dasharray="220" stroke-dashoffset="220"
+                style="transition:stroke-dashoffset .5s,stroke .5s"/>
+            </svg>
+            <div class="ering-center">
+              <span class="ering-n" id="eN" style="color:var(--gold)">—</span>
+              <span class="ering-u">bits</span>
+            </div>
+          </div>
+          <div class="ering-l" id="eSL2">Password strength</div>
+          <div class="ering-s" id="eCT2">Enter password above</div>
+        </div>
+        <div class="fblist" id="eFB"></div>
+      </div>
+    </div>
+
+    <button class="primary-btn btn-gold" id="eBTN" onclick="doEnc()">
+      <span>🔒</span><span>Encrypt</span>
+    </button>
+    <div id="eRes" class="hidden"></div>
+  </div>
+
+  <!-- ════ DECRYPT ════ -->
+  <div id="panD" class="panel">
+    <div class="cols">
+      <div class="card">
+        <div class="card-hd">Provide the encrypted data</div>
+        <div class="seg">
+          <button class="seg-btn on" id="dMF" onclick="sDM('f')">📁 Upload .enc file</button>
+          <button class="seg-btn"    id="dMB" onclick="sDM('b')">📋 Paste encrypted text</button>
+        </div>
+        <div id="dFA">
+          <div class="fld">
+            <div class="fld-lbl">Encrypted file</div>
+            <div class="dz" id="dDZ">
+              <input type="file" id="dF" onchange="onFile(this,'dDZ','dDZN')">
+              <div class="dz-ico">🔏</div>
+              <div class="dz-p">Drop your .enc file here</div>
+              <div class="dz-s">or click to browse</div>
+              <div class="dz-fn" id="dDZN"></div>
+            </div>
+          </div>
+        </div>
+        <div id="dBA" class="hidden">
+          <div class="fld">
+            <div class="fld-lbl">Encrypted text <span class="fld-hint">Paste the base64 output from Encrypt</span></div>
+            <textarea id="dB64" placeholder="Paste encrypted base64 data here…" style="font-family:var(--fm);font-size:11px;min-height:90px;"></textarea>
+          </div>
+        </div>
+
+        <div class="auth-badge" id="authB">
+          <div class="auth-ico">🔒</div>
+          <div>
+            <div class="auth-ttl">Integrity check will run automatically</div>
+            <div class="auth-sub">The 128-bit authentication tag verifies the file has not been altered</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">Enter your password</div>
+        <div class="fld">
+          <div class="fld-lbl">Password</div>
+          <div class="wrap">
+            <input type="password" id="dPw" placeholder="Enter the password used to encrypt…">
+            <button class="eyebtn" onclick="eye('dPw',this)">show</button>
+          </div>
+        </div>
+        <div class="decrypt-steps mt1">
+          <div style="font-size:11px;font-weight:700;color:var(--text-2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.6px;">How decryption works</div>
+          <div><span>1</span>Your password + stored salt → re-derive the key</div>
+          <div><span>2</span>Verify 128-bit authentication tag</div>
+          <div><span>3</span>Tag valid → decrypt and return your data</div>
+          <div><span>4</span>Tag invalid → reject immediately, write nothing</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="primary-btn btn-blue" id="dBTN" onclick="doDec()">
+      <span>🔓</span><span>Decrypt &amp; Verify</span>
+    </button>
+    <div id="dRes" class="hidden"></div>
+  </div>
+
+  <!-- Log -->
+  <div class="log-wrap">
+    <div class="log-hd">
+      <div class="log-title"><span>●</span> Activity Log</div>
+      <button class="log-clear" onclick="clearLog()">Clear</button>
+    </div>
+    <div class="log-body" id="logB">
+      <div class="log-row"><span class="log-ts">—</span><span class="log-msg">Abhedya ready. All cryptographic operations run server-side via the secure API.</span></div>
+    </div>
+  </div>
+
+  <!-- ════ PASSWORD TOOLS ════ -->
+  <div class="section">
+    <div class="sec-divider"><div class="sec-line"></div><div class="sec-label">Password Tools</div><div class="sec-line"></div></div>
+    <div class="twocol">
+
+      <div class="card">
+        <div class="card-hd">Password Strength Analyser</div>
+        <div class="fld">
+          <div class="fld-lbl">Test a password</div>
+          <div class="wrap">
+            <input type="password" id="pwT" placeholder="Type any password to analyse its strength…" oninput="anlOnly(this)">
+            <button class="eyebtn" onclick="eye('pwT',this)">show</button>
+          </div>
+        </div>
+        <div class="ering-wrap mt1">
+          <div class="ering">
+            <svg viewBox="0 0 90 90">
+              <circle cx="45" cy="45" r="35" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="6.5"/>
+              <circle id="tArc" cx="45" cy="45" r="35" fill="none" stroke="var(--blue)"
+                stroke-width="6.5" stroke-linecap="round"
+                stroke-dasharray="220" stroke-dashoffset="220"
+                style="transition:stroke-dashoffset .5s,stroke .5s"/>
+            </svg>
+            <div class="ering-center">
+              <span class="ering-n" id="tN" style="color:var(--blue)">—</span>
+              <span class="ering-u">bits</span>
+            </div>
+          </div>
+          <div class="ering-l" id="tL">Type a password above</div>
+          <div class="ering-s" id="tC"></div>
+        </div>
+        <div class="fblist" id="tFB"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">Secure Password Generator</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap;">
+          <span style="font-size:12px;color:var(--text-2);">Length:</span>
+          <input type="number" id="gLen" value="20" min="12" max="64">
+          <button class="primary-btn btn-green" style="flex:1;padding:10px;font-size:13px;" onclick="doGen()">Generate password</button>
+        </div>
+        <div class="fld-lbl" style="margin-bottom:6px;">Result</div>
+        <div class="gen-out" id="gOut">Click the button above to generate a secure password</div>
+        <div class="fblist mt1" id="gFB"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="cpbtn full" style="justify-content:center;" onclick="cpEl('gOut')">📋 Copy password</button>
+          <button class="cpbtn full" style="justify-content:center;border-color:rgba(212,168,67,.3);color:var(--gold);" onclick="useGen()">→ Use for encrypt</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ SECURITY REFERENCE ════ -->
+  <div class="section">
+    <div class="sec-divider"><div class="sec-line"></div><div class="sec-label">Security Reference</div><div class="sec-line"></div></div>
+    <div class="twocol">
+
+      <div class="card">
+        <div class="card-hd">Encryption Modes — Why AES-GCM?</div>
+        <div class="mode-4">
+          <div class="mcard danger" onclick="showM('ECB',this)"><div class="mcard-n" style="color:var(--red)">ECB</div><div class="mcard-t" style="color:var(--red)">⛔ Unsafe</div></div>
+          <div class="mcard" onclick="showM('CBC',this)"><div class="mcard-n" style="color:var(--amber)">CBC</div><div class="mcard-t" style="color:var(--amber)">⚠ Old</div></div>
+          <div class="mcard" onclick="showM('CTR',this)"><div class="mcard-n" style="color:var(--blue)">CTR</div><div class="mcard-t" style="color:var(--blue)">Stream</div></div>
+          <div class="mcard on" onclick="showM('GCM',this)"><div class="mcard-n" style="color:var(--gold)">GCM</div><div class="mcard-t" style="color:var(--green)">✓ Used here</div></div>
+        </div>
+        <div class="theory-box" id="mD"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">Known Attack Vectors &amp; Protections</div>
+        <table class="atk">
+          <thead><tr><th>Attack</th><th>Risk</th><th>Protection in Abhedya</th></tr></thead>
+          <tbody>
+            <tr><td>Brute force</td><td><span class="sev sev-h">High</span></td><td style="color:var(--green)">PBKDF2 · 600K rounds</td></tr>
+            <tr><td>Rainbow table</td><td><span class="sev sev-h">High</span></td><td style="color:var(--green)">Random 16-byte salt</td></tr>
+            <tr><td>Padding oracle</td><td><span class="sev sev-m">Med</span></td><td style="color:var(--green)">GCM — no padding</td></tr>
+            <tr><td>Nonce reuse</td><td><span class="sev sev-m">Med</span></td><td style="color:var(--green)">Random 12-byte IV</td></tr>
+            <tr><td>File tampering</td><td><span class="sev sev-m">Med</span></td><td style="color:var(--green)">128-bit auth tag</td></tr>
+            <tr><td>Timing attack</td><td><span class="sev sev-l">Low</span></td><td style="color:var(--green)">GCM constant-time</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mt2">
+      <div class="card-hd">Encrypted File Format — What's stored in the .enc file</div>
+      <div class="fmt-bar">
+        <div class="fmt-seg f1"><div class="fmt-sl">Ver</div><div class="fmt-ss">1B</div></div>
+        <div class="fmt-seg f2"><div class="fmt-sl">Salt</div><div class="fmt-ss">16B</div></div>
+        <div class="fmt-seg f3"><div class="fmt-sl">IV / Nonce</div><div class="fmt-ss">12B</div></div>
+        <div class="fmt-seg f4"><div class="fmt-sl">Auth Tag</div><div class="fmt-ss">16B</div></div>
+        <div class="fmt-seg f5"><div class="fmt-sl">Ciphertext</div><div class="fmt-ss">N bytes</div></div>
+      </div>
+      <div class="fmt-legend">
+        <div class="fml"><div class="fmd" style="background:#93c5fd"></div>Salt — prevents pre-computation attacks</div>
+        <div class="fml"><div class="fmd" style="background:#86efac"></div>IV — guarantees unique ciphertext every run</div>
+        <div class="fml"><div class="fmd" style="background:#fcd34d"></div>Auth Tag — detects any modification to the file</div>
+        <div class="fml"><div class="fmd" style="background:var(--gold)"></div>Ciphertext — your encrypted data</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- main -->
+</div><!-- z -->
+</div><!-- z root -->
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════
+//  State
+// ═══════════════════════════════════════════════
+let encB64 = null, encFN = 'encrypted.enc';
+let iMode = 't', dMode = 'f';
+let anlTimer = null, genPw = '';
+
+// ═══════════════════════════════════════════════
+//  Op selector
+// ═══════════════════════════════════════════════
+function pick(op) {
+  document.getElementById('opE').classList.toggle('sel', op === 'e');
+  document.getElementById('opD').classList.toggle('sel', op === 'd');
+  document.getElementById('panE').classList.toggle('on', op === 'e');
+  document.getElementById('panD').classList.toggle('on', op === 'd');
+}
+
+// ═══════════════════════════════════════════════
+//  Encrypt input mode
+// ═══════════════════════════════════════════════
+function sIM(m) {
+  iMode = m;
+  document.getElementById('tA').classList.toggle('hidden', m !== 't');
+  document.getElementById('fA').classList.toggle('hidden', m !== 'f');
+  document.getElementById('mTB').classList.toggle('on', m === 't');
+  document.getElementById('mFB').classList.toggle('on', m === 'f');
+}
+function sDM(m) {
+  dMode = m;
+  document.getElementById('dFA').classList.toggle('hidden', m !== 'f');
+  document.getElementById('dBA').classList.toggle('hidden', m !== 'b');
+  document.getElementById('dMF').classList.toggle('on', m === 'f');
+  document.getElementById('dMB').classList.toggle('on', m === 'b');
+}
+
+// ═══════════════════════════════════════════════
+//  File drop handling
+// ═══════════════════════════════════════════════
+function onFile(inp, zId, nId) {
+  const f = inp.files[0]; if (!f) return;
+  document.getElementById(nId).textContent = `${f.name}  (${fmtB(f.size)})`;
+  document.getElementById(zId).classList.add('has');
+}
+
+['eDZ','dDZ'].forEach(id => {
+  const el = document.getElementById(id); if (!el) return;
+  el.addEventListener('dragover',  e => { e.preventDefault(); el.classList.add('drag'); });
+  el.addEventListener('dragleave', ()  => el.classList.remove('drag'));
+  el.addEventListener('drop', e => {
+    e.preventDefault(); el.classList.remove('drag');
+    const f = e.dataTransfer.files[0]; if (!f) return;
+    const inp = el.querySelector('input'); const dt = new DataTransfer();
+    dt.items.add(f); inp.files = dt.files; inp.dispatchEvent(new Event('change'));
+  });
+});
+
+// ═══════════════════════════════════════════════
+//  Pipeline helpers
+// ═══════════════════════════════════════════════
+function pReset() {
+  for (let i = 0; i < 6; i++) { const e = document.getElementById('e'+i); if (e) e.className = 'ps'; }
+  for (let i = 0; i < 5; i++) { const c = document.getElementById('ec'+i); if (c) c.className = 'pc'; }
+}
+function pStep(i, s) { const e = document.getElementById('e'+i); if (e) e.className = 'ps '+s; }
+function pLit(n) { for (let i = 0; i < 5; i++) { const c = document.getElementById('ec'+i); if (c) c.className = 'pc'+(i < n ? ' lit' : ''); } }
+function pDone() { for (let i = 0; i < 6; i++) { const e = document.getElementById('e'+i); if (e) e.className = 'ps ok'; } pLit(5); }
+
+// ═══════════════════════════════════════════════
+//  Log
+// ═══════════════════════════════════════════════
+function log(msg, type = '') {
+  const b = document.getElementById('logB');
+  const d = document.createElement('div'); d.className = 'log-row';
+  const ts = new Date().toLocaleTimeString('en', { hour12: false });
+  d.innerHTML = `<span class="log-ts">${ts}</span><span class="log-msg ${type}">${msg}</span>`;
+  b.appendChild(d); b.scrollTop = b.scrollHeight;
+}
+function clearLog() { document.getElementById('logB').innerHTML = ''; }
+
+// ═══════════════════════════════════════════════
+//  ENCRYPT  →  POST /api/encrypt
+// ═══════════════════════════════════════════════
+async function doEnc() {
+  const pw = document.getElementById('ePw').value;
+  if (!pw) { log('A password is required to encrypt.', 'err'); return; }
+
+  const btn = document.getElementById('eBTN');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner" style="border-top-color:#1a0f00"></div><span>Encrypting…</span>`;
+
+  pReset(); pStep(0, 'go');
+  log('Preparing encryption…', 'info');
+
+  const fd = new FormData(); fd.append('password', pw);
+
+  if (iMode === 'f') {
+    const f = document.getElementById('eF').files[0];
+    if (!f) { log('Please select a file first.', 'err'); reset_btn(); return; }
+    fd.append('file', f); log(`File: ${f.name} (${fmtB(f.size)})`);
+  } else {
+    const t = document.getElementById('eTxt').value.trim();
+    if (!t) { log('Please enter a message first.', 'err'); reset_btn(); return; }
+    fd.append('text', t); log(`Message: ${t.substring(0, 48)}${t.length > 48 ? '…' : ''}`);
+  }
+
+  await sl(160); pStep(1, 'go'); pLit(1);
+  log('Generating random salt and IV…');
+  await sl(150); pStep(2, 'go'); pLit(2);
+  log('Deriving encryption key (PBKDF2-SHA256 · 600,000 rounds)…', 'warn');
+
+  try {
+    const res = await fetch('/api/encrypt', { method: 'POST', body: fd });
+    const d   = await res.json();
+
+    if (!d.success) {
+      log(`Error: ${d.error}`, 'err'); pStep(2, 'bad');
+      reset_btn(); return;
+    }
+
+    pStep(3, 'go'); pLit(3); await sl(100);
+    log('AES-256-GCM encryption complete.', 'ok');
+    pStep(4, 'go'); pLit(4); await sl(80);
+    log('128-bit authentication tag attached.', 'ok');
+    pStep(5, 'go'); pLit(5); await sl(60);
+    log(`Done — ${fmtB(d.original_size)} → ${fmtB(d.output_size)}  (${d.elapsed_ms}ms)`, 'ok');
+    pDone();
+
+    encB64 = d.encrypted_b64; encFN = d.filename;
+    const pi = d.password_info;
+
+    const r = document.getElementById('eRes');
+    r.innerHTML = `
+      <div class="result r-ok">
+        <div class="result-hd">
+          <div class="result-ico">✅</div>
+          <div><div class="result-title">Encrypted successfully</div><div class="result-sub">Protected with AES-256-GCM · ${d.elapsed_ms}ms</div></div>
+        </div>
+        <div class="result-metrics">
+          <div class="rmet"><div class="rmet-k">Original</div><div class="rmet-v">${fmtB(d.original_size)}</div></div>
+          <div class="rmet"><div class="rmet-k">Encrypted</div><div class="rmet-v">${fmtB(d.output_size)}</div></div>
+          <div class="rmet"><div class="rmet-k">Password</div><div class="rmet-v" style="color:${pi.color}">${pi.label}</div></div>
+        </div>
+        <div class="result-out">
+          <div class="out-hdr"><div class="out-lbl">Encrypted output (base64)</div><button class="cpbtn" onclick="cpTxt(encB64)">📋 Copy</button></div>
+          <div class="out-box">${encB64}</div>
+          <button class="dl-btn" onclick="dlEnc()">⬇ Download ${d.filename}</button>
+        </div>
+      </div>`;
+    r.classList.remove('hidden');
+  } catch (e) {
+    log(`Connection error: ${e.message}`, 'err');
+  }
+
+  function reset_btn() { btn.disabled = false; btn.innerHTML = '<span>🔒</span><span>Encrypt</span>'; }
+  reset_btn();
+}
+
+// ═══════════════════════════════════════════════
+//  DECRYPT  →  POST /api/decrypt
+// ═══════════════════════════════════════════════
+async function doDec() {
+  const pw = document.getElementById('dPw').value;
+  if (!pw) { log('A password is required to decrypt.', 'err'); return; }
+
+  const btn = document.getElementById('dBTN');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div><span>Decrypting…</span>`;
+
+  const auth = document.getElementById('authB');
+  auth.className = 'auth-badge';
+  auth.innerHTML = `<div class="auth-ico">⏳</div><div><div class="auth-ttl">Verifying integrity…</div><div class="auth-sub">Checking the 128-bit authentication tag</div></div>`;
+
+  log('Starting decryption…', 'info');
+  const fd = new FormData(); fd.append('password', pw);
+
+  if (dMode === 'f') {
+    const f = document.getElementById('dF').files[0];
+    if (!f) { log('Please upload a .enc file.', 'err'); reset_dec(); return; }
+    fd.append('file', f); log(`File: ${f.name}`);
+  } else {
+    const b = document.getElementById('dB64').value.trim();
+    if (!b) { log('Please paste the encrypted base64 text.', 'err'); reset_dec(); return; }
+    fd.append('encrypted_b64', b);
+  }
+
+  log('Re-deriving key from stored salt…');
+
+  try {
+    const res = await fetch('/api/decrypt', { method: 'POST', body: fd });
+    const d   = await res.json();
+
+    if (!d.success) {
+      log(`Decryption failed: ${d.error}`, 'err');
+      auth.className = 'auth-badge fail';
+      auth.innerHTML = `<div class="auth-ico">❌</div><div><div class="auth-ttl" style="color:var(--red)">Verification failed</div><div class="auth-sub">${d.error}</div></div>`;
+      const r = document.getElementById('dRes');
+      r.innerHTML = `<div class="result r-bad"><div class="result-hd"><div class="result-ico">❌</div><div><div class="result-title" style="color:var(--red)">Could not decrypt</div><div class="result-sub">${d.error}</div></div></div></div>`;
+      r.classList.remove('hidden');
+    } else {
+      log(`Integrity verified ✓ — file is authentic.`, 'ok');
+      log(`Decrypted: ${fmtB(d.decrypted_size)}  (${d.elapsed_ms}ms)`, 'ok');
+      auth.className = 'auth-badge ok';
+      auth.innerHTML = `<div class="auth-ico">✅</div><div><div class="auth-ttl" style="color:var(--green)">Integrity verified — file is authentic</div><div class="auth-sub">The authentication tag matched. No tampering detected.</div></div>`;
+      window.__dec = d;
+      const r = document.getElementById('dRes');
+      const isText = d.is_text;
+      const fname  = d.filename || 'decrypted';
+      r.innerHTML = `
+        <div class="result r-ok">
+          <div class="result-hd">
+            <div class="result-ico">✅</div>
+            <div>
+              <div class="result-title">Decrypted successfully</div>
+              <div class="result-sub">Authentication verified · ${d.elapsed_ms}ms · ${fmtB(d.decrypted_size)}</div>
+            </div>
+          </div>
+          <div class="result-metrics">
+            <div class="rmet"><div class="rmet-k">Size</div><div class="rmet-v">${fmtB(d.decrypted_size)}</div></div>
+            <div class="rmet"><div class="rmet-k">Integrity</div><div class="rmet-v" style="color:var(--green)">Verified ✓</div></div>
+            <div class="rmet"><div class="rmet-k">Time</div><div class="rmet-v">${d.elapsed_ms} ms</div></div>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="result-actions">
+            ${isText ? `<button class="ract-btn ract-view" onclick="toggleView()"><span id="viewIcon">👁</span> <span id="viewTxt">View content</span></button>` : ''}
+            <button class="ract-btn ract-dl" onclick="dlDecrypted()">⬇ Download <strong>${fname}</strong></button>
+            ${isText ? `<button class="ract-btn ract-cp" onclick="cpTxt(window.__dec.decrypted_text)">📋 Copy text</button>` : ''}
+          </div>
+
+          <!-- Collapsible text viewer (text files only) -->
+          ${isText ? `
+          <div class="result-viewer hidden" id="decViewer">
+            <div class="viewer-toolbar">
+              <span class="viewer-label">Content preview</span>
+              <div style="display:flex;gap:6px;">
+                <button class="cpbtn" onclick="cpTxt(window.__dec.decrypted_text)">📋 Copy all</button>
+                <button class="cpbtn" onclick="toggleView()" style="border-color:var(--border-lg);">✕ Close</button>
+              </div>
+            </div>
+            <div class="viewer-body" id="decViewerBody"></div>
+          </div>` : `
+          <div class="result-out" style="padding-top:0;">
+            <div class="out-hdr"><div class="out-lbl">Binary file — use Download above</div></div>
+            <div class="out-box" style="color:var(--text-3);font-style:italic;">Binary data (${fmtB(d.decrypted_size)}) — click Download to save the file.</div>
+          </div>`}
+        </div>`;
+      r.classList.remove('hidden');
+    }
+  } catch (e) {
+    log(`Connection error: ${e.message}`, 'err');
+  }
+
+  function reset_dec() { btn.disabled = false; btn.innerHTML = '<span>🔓</span><span>Decrypt &amp; Verify</span>'; }
+  reset_dec();
+}
+
+// ═══════════════════════════════════════════════
+//  Password strength (live, API-driven)
+// ═══════════════════════════════════════════════
+async function onPw(inp, arcId, numId, barId, lId, cId, fbId) {
+  const pw = inp.value; if (!pw) return;
+  try {
+    const res = await fetch('/api/analyse-pw', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    const d = await res.json();
+    setRing(arcId, numId, d.entropy, d.color);
+    setBar(barId, lId, cId, d);
+    renderFB(fbId, d.issues, d.suggestions);
+    // Sync label copy in entropy widget
+    const l2 = document.getElementById(lId + '2'), c2 = document.getElementById(cId + '2');
+    if (l2) { l2.textContent = d.label; l2.style.color = d.color; }
+    if (c2) c2.textContent = 'Estimated crack time: ' + d.crack_time;
+  } catch(e) {}
+}
+
+function anlOnly(inp) {
+  clearTimeout(anlTimer);
+  anlTimer = setTimeout(async () => {
+    const pw = inp.value; if (!pw) return;
+    try {
+      const res = await fetch('/api/analyse-pw', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      });
+      const d = await res.json();
+      setRing('tArc', 'tN', d.entropy, d.color);
+      document.getElementById('tL').textContent = d.label;
+      document.getElementById('tL').style.color  = d.color;
+      document.getElementById('tC').textContent  = 'Estimated crack time: ' + d.crack_time;
+      renderFB('tFB', d.issues, d.suggestions);
+    } catch(e) {}
+  }, 220);
+}
+
+async function doGen() {
+  const len = Math.max(12, Math.min(64, parseInt(document.getElementById('gLen').value) || 20));
+  try {
+    const res = await fetch('/api/generate-pw?length=' + len);
+    const d   = await res.json();
+    genPw = d.password;
+    document.getElementById('gOut').textContent = d.password;
+    document.getElementById('gFB').innerHTML = `<div class="fb fb-g">✓ ${d.label} · ${d.entropy} bits · Crack time: ${d.crack_time}</div>`;
+  } catch(e) {}
+}
+
+function useGen() {
+  if (!genPw) return;
+  document.getElementById('ePw').value = genPw;
+  document.getElementById('ePw').dispatchEvent(new Event('input'));
+  pick('e'); window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════════════
+//  Theory — mode comparison
+// ═══════════════════════════════════════════════
+const MODES = {
+  ECB: '<strong style="color:var(--red)">⛔ Do not use.</strong> Electronic Codebook mode encrypts every block independently with the same key. Identical plaintext blocks produce identical ciphertext blocks, leaking structural patterns from your data. A famous example (the "ECB penguin") shows an encrypted image where the original shape is still clearly visible.',
+  CBC: '<strong style="color:var(--amber)">⚠ Outdated.</strong> Cipher Block Chaining chains each block with the previous, solving ECB\'s pattern problem. However it requires padding and is vulnerable to padding oracle attacks (POODLE, BEAST, Lucky13). It also needs a separate HMAC to ensure integrity — making it complex and error-prone.',
+  CTR: '<strong style="color:var(--blue)">Reasonable — but incomplete.</strong> Counter mode converts AES into a stream cipher. No padding needed, parallelisable, and fast. The downside: CTR provides confidentiality only — no authentication. You must add HMAC-SHA256 separately. One wrong implementation decision can leave you vulnerable to bit-flipping attacks.',
+  GCM: '<strong style="color:var(--gold)">✓ The right choice — used by Abhedya.</strong> GCM is an Authenticated Encryption with Associated Data (AEAD) mode. It provides both encryption and authentication in a single, efficient pass. The 128-bit authentication tag mathematically guarantees that any modification to the ciphertext will be detected. Chosen by TLS 1.3, SSH, WireGuard, and this project.'
+};
+const MCOL = { ECB: 'var(--red)', CBC: 'var(--amber)', CTR: 'var(--blue)', GCM: 'var(--gold)' };
+
+function showM(m, el) {
+  document.querySelectorAll('.mcard').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  const box = document.getElementById('mD');
+  box.style.borderLeftColor = MCOL[m];
+  box.innerHTML = MODES[m];
+}
+showM('GCM', document.querySelector('.mcard.on'));
+
+// ═══════════════════════════════════════════════
+//  UI helpers
+// ═══════════════════════════════════════════════
+function setRing(arcId, numId, entropy, color) {
+  const a = document.getElementById(arcId), n = document.getElementById(numId);
+  if (!a || !n) return;
+  a.style.strokeDashoffset = 220 * (1 - Math.min(entropy / 100, 1));
+  a.style.stroke = color; n.textContent = Math.round(entropy); n.style.color = color;
+}
+
+function setBar(barId, lId, cId, d) {
+  const b = document.getElementById(barId), l = document.getElementById(lId), c = document.getElementById(cId);
+  if (b) { b.style.width = d.score + '%'; b.style.background = d.color; }
+  if (l) { l.textContent = d.label; l.style.color = d.color; }
+  if (c) c.textContent = 'Crack: ' + d.crack_time;
+}
+
+function renderFB(id, issues, sugg) {
+  const el = document.getElementById(id); if (!el) return;
+  let h = '';
+  (issues || []).forEach(i => { h += `<div class="fb fb-e">⚠ ${i}</div>`; });
+  (sugg  || []).forEach(s => { h += `<div class="fb fb-w">→ ${s}</div>`; });
+  if (!issues?.length && !sugg?.length) h = '<div class="fb fb-g">✓ Password looks strong!</div>';
+  el.innerHTML = h;
+}
+
+function fmtB(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+  return (n / 1048576).toFixed(2) + ' MB';
+}
+function sl(ms) { return new Promise(r => setTimeout(r, ms)); }
+function eye(id, btn) {
+  const i = document.getElementById(id);
+  i.type = i.type === 'password' ? 'text' : 'password';
+  btn.textContent = i.type === 'password' ? 'show' : 'hide';
+}
+function cpEl(id) { navigator.clipboard.writeText(document.getElementById(id).textContent || '').catch(() => {}); }
+function cpTxt(t) { navigator.clipboard.writeText(t).catch(() => {}); }
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function toggleView() {
+  const panel = document.getElementById('decViewer');
+  const icon  = document.getElementById('viewIcon');
+  const txt   = document.getElementById('viewTxt');
+  if (!panel) return;
+  const open = panel.classList.toggle('hidden');
+  if (!open) {
+    // Just opened — populate the body
+    const body = document.getElementById('decViewerBody');
+    if (body && window.__dec) body.textContent = window.__dec.decrypted_text;
+    if (icon) icon.textContent = '✕';
+    if (txt)  txt.textContent  = 'Close preview';
+  } else {
+    if (icon) icon.textContent = '👁';
+    if (txt)  txt.textContent  = 'View content';
+  }
+}
+
+function dlDecrypted() {
+  if (!window.__dec) return;
+  const d = window.__dec;
+  let blob, fname;
+  if (d.is_text) {
+    // Plain text — save as original filename or .txt
+    blob  = new Blob([d.decrypted_text], { type: 'text/plain' });
+    fname = (d.filename && d.filename !== 'decrypted') ? d.filename : 'decrypted.txt';
+  } else {
+    // Binary — decode base64 back to bytes
+    const bytes = Uint8Array.from(atob(d.decrypted_text), c => c.charCodeAt(0));
+    blob  = new Blob([bytes], { type: 'application/octet-stream' });
+    fname = d.filename || 'decrypted';
+  }
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob), download: fname
+  });
+  a.click();
+  log(`Downloaded: ${fname}  (${fmtB(d.decrypted_size)})`, 'ok');
+}
+
+
+function dlEnc() {
+  if (!encB64) return;
+  const b = Uint8Array.from(atob(encB64), c => c.charCodeAt(0));
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([b], { type: 'application/octet-stream' })), download: encFN });
+  a.click();
+}
+
+// ═══════════════════════════════════════════════
+//  Server status check
+// ═══════════════════════════════════════════════
+async function chkSrv() {
+  const p = document.getElementById('srv'), t = document.getElementById('srvTxt');
+  try {
+    const d = await (await fetch('/api/status')).json();
+    p.className = 'server-dot on';
+    t.textContent = d.cipher + ' · Online';
+    log(`Connected — ${d.cipher} · ${d.kdf} · ${d.iterations.toLocaleString()} KDF rounds`, 'ok');
+  } catch(e) {
+    p.className = 'server-dot off';
+    t.textContent = 'Server offline';
+    log('Cannot connect to server. Run: python app.py', 'err');
+  }
+}
+
+chkSrv();
+document.getElementById('ePw').dispatchEvent(new Event('input'));
+</script>
+</body>
+</html>
